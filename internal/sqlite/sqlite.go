@@ -6,12 +6,14 @@ import (
 	"flight-routes-api/internal/config"
 	"fmt"
 	"time"
+
+	_ "modernc.org/sqlite"
 )
 
 func New(cfg config.DatabaseConfig) (*sql.DB, error) {
 	dsn := buildDSN(cfg)
 
-	db, err := sql.Open("sqlite3", dsn)
+	db, err := sql.Open("sqlite", dsn)
 	if err != nil {
 		return nil, err
 	}
