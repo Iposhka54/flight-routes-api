@@ -61,3 +61,33 @@ func pingWithTimeout(db *sql.DB, timeoutSec int) error {
 
 	return db.PingContext(ctx)
 }
+
+func InitDB(db *sql.DB) error {
+	airportTable := `CREATE TABLE airports (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    iata_code VARCHAR(3) UNIQUE NOT NULL,
+    name VARCHAR NOT NULL,
+    country VARCHAR NOT NULL
+    );`
+
+	if _, err := db.Exec(airportTable); err != nil {
+		return fmt.Errorf("failed to create airport table: %w", err)
+	}
+
+	flightsTable := `
+	CREATE TABLE IF NOT EXISTS flights (
+		id INTEGER PRIMARY KEY AUTOINCREMENT,
+		origin_airport_id INTEGER NOT NULL,
+		destination_airport_id INTEGER NOT NULL,
+		price DECIMAL(8,2) NOT NULL,
+		FOREIGN KEY (origin_airport_id) REFERENCES airports(id),
+		FOREIGN KEY (destination_airport_id) REFERENCES airports(id),
+		UNIQUE(origin_airport_id, destination_airport_id)
+	);`
+
+	if _, err := db.Exec(flightsTable); err != nil {
+		return fmt.Errorf("failed to create flights table: %w", err)
+	}
+
+	return nil
+}
