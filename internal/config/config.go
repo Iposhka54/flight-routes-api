@@ -3,7 +3,7 @@ package config
 import "github.com/ilyakaznacheev/cleanenv"
 
 type DatabaseConfig struct {
-	Path string `yaml:"path" env:"PATH" env-default:"flight-routes.db"`
+	Path string `yaml:"path" env:"PATH" env-default:"db/flight-routes.db"`
 
 	Mode string `yaml:"mode" env:"MODE" env-default:"rwc"`
 
