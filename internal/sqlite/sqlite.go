@@ -63,7 +63,7 @@ func pingWithTimeout(db *sql.DB, timeoutSec int) error {
 }
 
 func InitDB(db *sql.DB) error {
-	airportTable := `CREATE TABLE airports (
+	airportTable := `CREATE TABLE IF NOT EXISTS airports (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     iata_code VARCHAR(3) UNIQUE NOT NULL,
     name VARCHAR NOT NULL,
