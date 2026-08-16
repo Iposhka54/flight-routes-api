@@ -63,7 +63,7 @@ func pingWithTimeout(db *sql.DB, timeoutSec int) error {
 }
 
 func InitDB(db *sql.DB) error {
-	airportTable := `CREATE TABLE IF NOT EXISTS airports (
+	airportTable := `CREATE TABLE IF NOT EXISTS airport (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     iata_code VARCHAR(3) UNIQUE NOT NULL,
     name VARCHAR NOT NULL,
@@ -75,13 +75,13 @@ func InitDB(db *sql.DB) error {
 	}
 
 	flightsTable := `
-	CREATE TABLE IF NOT EXISTS flights (
+	CREATE TABLE IF NOT EXISTS flight (
 		id INTEGER PRIMARY KEY AUTOINCREMENT,
 		origin_airport_id INTEGER NOT NULL,
 		destination_airport_id INTEGER NOT NULL,
 		price DECIMAL(8,2) NOT NULL,
-		FOREIGN KEY (origin_airport_id) REFERENCES airports(id),
-		FOREIGN KEY (destination_airport_id) REFERENCES airports(id),
+		FOREIGN KEY (origin_airport_id) REFERENCES airport(id),
+		FOREIGN KEY (destination_airport_id) REFERENCES airport(id),
 		UNIQUE(origin_airport_id, destination_airport_id)
 	);`
 

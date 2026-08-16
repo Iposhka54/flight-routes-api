@@ -3,7 +3,12 @@ package main
 import (
 	"context"
 	"flight-routes-api/internal/config"
+	"flight-routes-api/internal/handler"
+	"flight-routes-api/internal/repository"
+	"flight-routes-api/internal/service"
 	"flight-routes-api/internal/sqlite"
+	"fmt"
+	"net/http"
 	"os"
 	"os/signal"
 
@@ -44,4 +49,28 @@ func main() {
 	}
 
 	log.Info("database initialization completed")
+
+	airportRepository := repository.NewAirportRepository(db)
+
+	airportService := service.NewAirportService(airportRepository)
+
+	airportHandler := handler.NewAirportHandler(airportService)
+
+	mux := http.NewServeMux()
+
+	mux.HandleFunc("GET /airports", airportHandler.GetAirports)
+
+	server := http.NewServeMux()
+	server.Handle("/api/", http.StripPrefix("/api", mux))
+
+	addr := fmt.Sprintf("%s:%d", cfg.ServerConfig.Host, cfg.ServerConfig.Port)
+	log.Info("http server listening",
+		zap.String("addr", addr))
+	if err = http.ListenAndServe(addr, server); err != nil {
+		log.Fatal("failed to start http server", zap.Error(err))
+	}
+
+	<-ctx.Done()
+
+	log.Info("http server stopped")
 }
