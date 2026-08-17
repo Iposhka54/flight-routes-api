@@ -59,6 +59,7 @@ func main() {
 	mux := http.NewServeMux()
 
 	mux.HandleFunc("GET /airports", airportHandler.GetAirports)
+	mux.HandleFunc("GET /airport/{iataCode}", airportHandler.GetAirport)
 
 	server := http.NewServeMux()
 	server.Handle("/api/", http.StripPrefix("/api", mux))

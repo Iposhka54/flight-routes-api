@@ -6,11 +6,11 @@ import (
 )
 
 type AirportService struct {
-	repository repository.AirportRepository
+	repository *repository.AirportRepository
 }
 
-func NewAirportService(airportRepository repository.AirportRepository) AirportService {
-	return AirportService{repository: airportRepository}
+func NewAirportService(airportRepository *repository.AirportRepository) *AirportService {
+	return &AirportService{repository: airportRepository}
 }
 
 func (s *AirportService) GetAirports() ([]model.Airport, error) {
@@ -21,4 +21,14 @@ func (s *AirportService) GetAirports() ([]model.Airport, error) {
 	}
 
 	return airports, err
+}
+
+func (s *AirportService) GetAirport(iataCode string) (model.Airport, error) {
+	airport, err := s.repository.GetAirport(iataCode)
+
+	if err != nil {
+		return airport, err
+	}
+
+	return airport, nil
 }

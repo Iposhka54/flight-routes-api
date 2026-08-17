@@ -5,25 +5,28 @@ import (
 	"flight-routes-api/internal/model"
 )
 
+var (
+	getAirports      = `SELECT id, iata_code, name, country FROM airport;`
+	getAirportByIata = `SELECT id, iata_code, name, country FROM airport
+                    	WHERE iata_code = $1;`
+)
+
 type AirportRepository struct {
 	db *sql.DB
 }
 
-func NewAirportRepository(db *sql.DB) AirportRepository {
-	return AirportRepository{db: db}
+func NewAirportRepository(db *sql.DB) *AirportRepository {
+	return &AirportRepository{db: db}
 }
 
-func (h *AirportRepository) GetAirports() ([]model.Airport, error) {
-	getAirports := `SELECT * FROM airport`
-
-	rows, err := h.db.Query(getAirports)
+func (r *AirportRepository) GetAirports() ([]model.Airport, error) {
+	rows, err := r.db.Query(getAirports)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
 
-	var airports []model.Airport
-
+	var airports = make([]model.Airport, 0)
 	for rows.Next() {
 		var airport model.Airport
 
@@ -40,4 +43,15 @@ func (h *AirportRepository) GetAirports() ([]model.Airport, error) {
 	}
 
 	return airports, nil
+}
+
+func (r *AirportRepository) GetAirport(iataCode string) (model.Airport, error) {
+	var airport model.Airport
+	err := r.db.QueryRow(getAirportByIata, iataCode).Scan(&airport.ID, &airport.IATACode, &airport.Name, &airport.Country)
+
+	if err != nil {
+		return model.Airport{}, err
+	}
+
+	return airport, err
 }
