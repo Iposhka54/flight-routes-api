@@ -55,7 +55,7 @@ func (r *AirportRepository) GetAirport(iataCode string) (model.Airport, error) {
 		return model.Airport{}, err
 	}
 
-	return airport, err
+	return airport, nil
 }
 
 func (r *AirportRepository) CreateAirport(airport model.Airport) (int, error) {
