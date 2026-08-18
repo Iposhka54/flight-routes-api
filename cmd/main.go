@@ -60,6 +60,7 @@ func main() {
 
 	mux.HandleFunc("GET /airports", airportHandler.GetAirports)
 	mux.HandleFunc("GET /airport/{iataCode}", airportHandler.GetAirportByIataCode)
+	mux.HandleFunc("POST /airports", airportHandler.CreateAirport)
 
 	server := http.NewServeMux()
 	server.Handle("/api/", http.StripPrefix("/api", mux))

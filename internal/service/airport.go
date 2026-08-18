@@ -3,6 +3,7 @@ package service
 import (
 	"flight-routes-api/internal/model"
 	"flight-routes-api/internal/repository"
+	"fmt"
 )
 
 type AirportService struct {
@@ -30,5 +31,30 @@ func (s *AirportService) GetAirport(iataCode string) (model.Airport, error) {
 		return airport, err
 	}
 
+	return airport, nil
+}
+
+func (s *AirportService) CreateAirport(airport model.Airport) (model.Airport, error) {
+	if len(airport.IATACode) != 3 {
+		return airport, fmt.Errorf("missing iataCode's format")
+	}
+
+	countryLength := len(airport.Country)
+	if countryLength < 3 || countryLength > 64 {
+		return airport, fmt.Errorf("missing country's format")
+	}
+
+	nameLength := len(airport.Name)
+	if nameLength < 3 || nameLength > 64 {
+		return airport, fmt.Errorf("missing name's format")
+	}
+
+	id, err := s.repository.CreateAirport(airport)
+
+	if err != nil {
+		return airport, err
+	}
+
+	airport.ID = id
 	return airport, nil
 }

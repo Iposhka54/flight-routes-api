@@ -2,6 +2,7 @@ package handler
 
 import (
 	"encoding/json"
+	"flight-routes-api/internal/model"
 	"flight-routes-api/internal/service"
 	"net/http"
 )
@@ -45,6 +46,27 @@ func (h *AirportHandler) GetAirportByIataCode(w http.ResponseWriter, r *http.Req
 	airport, err := h.airportService.GetAirport(iataCode)
 	if err != nil {
 		http.Error(w, "Failed to get airport", http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	if err = json.NewEncoder(w).Encode(airport); err != nil {
+		http.Error(w, "Failed to encode response", http.StatusInternalServerError)
+		return
+	}
+}
+
+func (h *AirportHandler) CreateAirport(w http.ResponseWriter, r *http.Request) {
+	var airport model.Airport
+	if err := json.NewDecoder(r.Body).Decode(&airport); err != nil {
+		http.Error(w, "Failed to decode response", http.StatusInternalServerError)
+		return
+	}
+
+	airport, err := h.airportService.CreateAirport(airport)
+	if err != nil {
+		http.Error(w, "Failed to create airport", http.StatusInternalServerError)
 		return
 	}
 

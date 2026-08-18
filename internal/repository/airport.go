@@ -9,6 +9,8 @@ var (
 	getAirports      = `SELECT id, iata_code, name, country FROM airport;`
 	getAirportByIata = `SELECT id, iata_code, name, country FROM airport
                     	WHERE iata_code = $1;`
+	createAirport = `INSERT INTO airport(iata_code, name, country)
+					 VALUES ($1, $2, $3) RETURNING id;`
 )
 
 type AirportRepository struct {
@@ -54,4 +56,17 @@ func (r *AirportRepository) GetAirport(iataCode string) (model.Airport, error) {
 	}
 
 	return airport, err
+}
+
+func (r *AirportRepository) CreateAirport(airport model.Airport) (int, error) {
+	var id int
+	err := r.db.QueryRow(createAirport,
+		airport.IATACode, airport.Name, airport.Country,
+	).Scan(&id)
+
+	if err != nil {
+		return 0, err
+	}
+
+	return id, nil
 }
