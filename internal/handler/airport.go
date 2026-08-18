@@ -29,7 +29,7 @@ func (h *AirportHandler) GetAirports(w http.ResponseWriter, _ *http.Request) {
 	}
 }
 
-func (h *AirportHandler) GetAirport(w http.ResponseWriter, r *http.Request) {
+func (h *AirportHandler) GetAirportByIataCode(w http.ResponseWriter, r *http.Request) {
 	iataCode := r.PathValue("iataCode")
 
 	if iataCode == "" {
