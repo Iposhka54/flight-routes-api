@@ -20,7 +20,7 @@ func (s *AirportService) GetAirports() ([]model.Airport, error) {
 		return nil, err
 	}
 
-	return airports, err
+	return airports, nil
 }
 
 func (s *AirportService) GetAirport(iataCode string) (model.Airport, error) {
