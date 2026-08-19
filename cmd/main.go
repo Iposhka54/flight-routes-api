@@ -4,6 +4,7 @@ import (
 	"context"
 	"flight-routes-api/internal/config"
 	"flight-routes-api/internal/handler"
+	"flight-routes-api/internal/middleware"
 	"flight-routes-api/internal/repository"
 	"flight-routes-api/internal/service"
 	"flight-routes-api/internal/sqlite"
@@ -57,10 +58,13 @@ func main() {
 	airportHandler := handler.NewAirportHandler(airportService)
 
 	mux := http.NewServeMux()
+	withErrors := func(h middleware.HandlerFunc) http.HandlerFunc {
+		return middleware.ErrorHandler(log, h)
+	}
 
-	mux.HandleFunc("GET /airports", airportHandler.GetAirports)
-	mux.HandleFunc("GET /airport/{iataCode}", airportHandler.GetAirportByIataCode)
-	mux.HandleFunc("POST /airports", airportHandler.CreateAirport)
+	mux.HandleFunc("GET /airports", withErrors(airportHandler.GetAirports))
+	mux.HandleFunc("GET /airport/{iataCode}", withErrors(airportHandler.GetAirportByIataCode))
+	mux.HandleFunc("POST /airports", withErrors(airportHandler.CreateAirport))
 
 	server := http.NewServeMux()
 	server.Handle("/api/", http.StripPrefix("/api", mux))

@@ -2,7 +2,10 @@ package repository
 
 import (
 	"database/sql"
+	"errors"
+	apperr "flight-routes-api/internal/error"
 	"flight-routes-api/internal/model"
+	"flight-routes-api/internal/sqlite"
 )
 
 var (
@@ -24,7 +27,7 @@ func NewAirportRepository(db *sql.DB) *AirportRepository {
 func (r *AirportRepository) GetAirports() ([]model.Airport, error) {
 	rows, err := r.db.Query(getAirports)
 	if err != nil {
-		return nil, err
+		return nil, wrapDBError(err)
 	}
 	defer rows.Close()
 
@@ -34,14 +37,14 @@ func (r *AirportRepository) GetAirports() ([]model.Airport, error) {
 
 		err = rows.Scan(&airport.ID, &airport.IATACode, &airport.Name, &airport.Country)
 		if err != nil {
-			return nil, err
+			return nil, wrapDBError(err)
 		}
 
 		airports = append(airports, airport)
 	}
 
 	if err = rows.Err(); err != nil {
-		return nil, err
+		return nil, wrapDBError(err)
 	}
 
 	return airports, nil
@@ -50,9 +53,11 @@ func (r *AirportRepository) GetAirports() ([]model.Airport, error) {
 func (r *AirportRepository) GetAirport(iataCode string) (model.Airport, error) {
 	var airport model.Airport
 	err := r.db.QueryRow(getAirportByIata, iataCode).Scan(&airport.ID, &airport.IATACode, &airport.Name, &airport.Country)
-
 	if err != nil {
-		return model.Airport{}, err
+		if errors.Is(err, sql.ErrNoRows) {
+			return model.Airport{}, apperr.ErrAirportNotFound
+		}
+		return model.Airport{}, wrapDBError(err)
 	}
 
 	return airport, nil
@@ -63,10 +68,16 @@ func (r *AirportRepository) CreateAirport(airport model.Airport) (int, error) {
 	err := r.db.QueryRow(createAirport,
 		airport.IATACode, airport.Name, airport.Country,
 	).Scan(&id)
-
 	if err != nil {
-		return 0, err
+		if sqlite.IsUniqueConstraint(err) {
+			return 0, apperr.ErrAirportAlreadyExists
+		}
+		return 0, wrapDBError(err)
 	}
 
 	return id, nil
+}
+
+func wrapDBError(err error) error {
+	return apperr.ErrInternal.Wrap(err)
 }

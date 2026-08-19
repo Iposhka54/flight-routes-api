@@ -2,8 +2,10 @@ package handler
 
 import (
 	"encoding/json"
+	apperr "flight-routes-api/internal/error"
 	"flight-routes-api/internal/model"
 	"flight-routes-api/internal/service"
+	"fmt"
 	"net/http"
 )
 
@@ -15,82 +17,49 @@ func NewAirportHandler(airportService *service.AirportService) *AirportHandler {
 	return &AirportHandler{airportService: airportService}
 }
 
-func (h *AirportHandler) GetAirports(w http.ResponseWriter, _ *http.Request) {
+func (h *AirportHandler) GetAirports(w http.ResponseWriter, _ *http.Request) error {
 	airports, err := h.airportService.GetAirports()
 	if err != nil {
-		http.Error(w, "Failed to get airports", http.StatusInternalServerError)
-		return
+		return err
 	}
 
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusOK)
-	if err = json.NewEncoder(w).Encode(airports); err != nil {
-		http.Error(w, "Failed to encode response", http.StatusInternalServerError)
-		return
-	}
+	return writeJSON(w, http.StatusOK, airports)
 }
 
-func (h *AirportHandler) GetAirportByIataCode(w http.ResponseWriter, r *http.Request) {
-	iataCode := r.PathValue("iataCode")
-
-	if iataCode == "" {
-		h.respondError(w, http.StatusBadRequest, "missing airport iataCode")
-		return
-	}
-
-	if len(iataCode) != 3 {
-		h.respondError(w, http.StatusBadRequest, "missing iataCode's format")
-		return
-	}
-
-	airport, err := h.airportService.GetAirport(iataCode)
+func (h *AirportHandler) GetAirportByIataCode(w http.ResponseWriter, r *http.Request) error {
+	airport, err := h.airportService.GetAirport(r.PathValue("iataCode"))
 	if err != nil {
-		http.Error(w, "Failed to get airport", http.StatusInternalServerError)
-		return
+		return err
 	}
 
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusOK)
-	if err = json.NewEncoder(w).Encode(airport); err != nil {
-		http.Error(w, "Failed to encode response", http.StatusInternalServerError)
-		return
-	}
+	return writeJSON(w, http.StatusOK, airport)
 }
 
-func (h *AirportHandler) CreateAirport(w http.ResponseWriter, r *http.Request) {
+func (h *AirportHandler) CreateAirport(w http.ResponseWriter, r *http.Request) error {
 	var airport model.Airport
 	if err := json.NewDecoder(r.Body).Decode(&airport); err != nil {
-		http.Error(w, "Failed to decode response", http.StatusInternalServerError)
-		return
+		return fmt.Errorf("%w: %v", apperr.ErrDecodeJSON, err)
 	}
 
 	airport, err := h.airportService.CreateAirport(airport)
 	if err != nil {
-		http.Error(w, "Failed to create airport", http.StatusInternalServerError)
-		return
+		return err
 	}
 
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusOK)
-	if err = json.NewEncoder(w).Encode(airport); err != nil {
-		http.Error(w, "Failed to encode response", http.StatusInternalServerError)
-		return
-	}
+	return writeJSON(w, http.StatusOK, airport)
 }
 
-func (h *AirportHandler) respondJSON(w http.ResponseWriter, status int, data interface{}) {
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(status)
-	if err := json.NewEncoder(w).Encode(data); err != nil {
-		http.Error(w, "Failed to encode response", http.StatusInternalServerError)
-		return
+func writeJSON(w http.ResponseWriter, status int, data any) error {
+	body, err := json.Marshal(data)
+	if err != nil {
+		return fmt.Errorf("%w: %v", apperr.ErrEncodeJSON, err)
 	}
-}
 
-func (h *AirportHandler) respondError(w http.ResponseWriter, status int, message string) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(status)
-	json.NewEncoder(w).Encode(map[string]string{
-		"error": message,
-	})
+	if _, err = w.Write(body); err != nil {
+		return fmt.Errorf("%w: %v", apperr.ErrEncodeJSON, err)
+	}
+
+	return nil
 }
