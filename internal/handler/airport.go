@@ -9,6 +9,19 @@ import (
 	"net/http"
 )
 
+type airportResponse struct {
+	ID       int    `json:"id"`
+	IATACode string `json:"iataCode"`
+	Name     string `json:"name"`
+	Country  string `json:"country"`
+}
+
+type createAirportRequest struct {
+	IATACode string `json:"iataCode"`
+	Name     string `json:"name"`
+	Country  string `json:"country"`
+}
+
 type AirportHandler struct {
 	airportService *service.AirportService
 }
@@ -23,7 +36,7 @@ func (h *AirportHandler) GetAirports(w http.ResponseWriter, _ *http.Request) err
 		return err
 	}
 
-	return writeJSON(w, http.StatusOK, airports)
+	return writeJSON(w, http.StatusOK, newAirportResponses(airports))
 }
 
 func (h *AirportHandler) GetAirportByIataCode(w http.ResponseWriter, r *http.Request) error {
@@ -32,34 +45,44 @@ func (h *AirportHandler) GetAirportByIataCode(w http.ResponseWriter, r *http.Req
 		return err
 	}
 
-	return writeJSON(w, http.StatusOK, airport)
+	return writeJSON(w, http.StatusOK, newAirportResponse(airport))
 }
 
 func (h *AirportHandler) CreateAirport(w http.ResponseWriter, r *http.Request) error {
-	var airport model.Airport
-	if err := json.NewDecoder(r.Body).Decode(&airport); err != nil {
+	var req createAirportRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		return fmt.Errorf("%w: %v", apperr.ErrDecodeJSON, err)
 	}
 
-	airport, err := h.airportService.CreateAirport(airport)
+	airport, err := h.airportService.CreateAirport(req.toModel())
 	if err != nil {
 		return err
 	}
 
-	return writeJSON(w, http.StatusOK, airport)
+	return writeJSON(w, http.StatusOK, newAirportResponse(airport))
 }
 
-func writeJSON(w http.ResponseWriter, status int, data any) error {
-	body, err := json.Marshal(data)
-	if err != nil {
-		return fmt.Errorf("%w: %v", apperr.ErrEncodeJSON, err)
+func newAirportResponse(airport model.Airport) airportResponse {
+	return airportResponse{
+		ID:       airport.ID,
+		IATACode: airport.IATACode,
+		Name:     airport.Name,
+		Country:  airport.Country,
 	}
+}
 
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(status)
-	if _, err = w.Write(body); err != nil {
-		return fmt.Errorf("%w: %v", apperr.ErrEncodeJSON, err)
+func newAirportResponses(airports []model.Airport) []airportResponse {
+	result := make([]airportResponse, 0, len(airports))
+	for _, airport := range airports {
+		result = append(result, newAirportResponse(airport))
 	}
+	return result
+}
 
-	return nil
+func (r createAirportRequest) toModel() model.Airport {
+	return model.Airport{
+		IATACode: r.IATACode,
+		Name:     r.Name,
+		Country:  r.Country,
+	}
 }

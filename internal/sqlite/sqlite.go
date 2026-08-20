@@ -79,7 +79,7 @@ func InitDB(db *sql.DB) error {
 		id INTEGER PRIMARY KEY AUTOINCREMENT,
 		origin_airport_id INTEGER NOT NULL,
 		destination_airport_id INTEGER NOT NULL,
-		price DECIMAL(8,2) NOT NULL,
+		price INTEGER NOT NULL,
 		FOREIGN KEY (origin_airport_id) REFERENCES airport(id),
 		FOREIGN KEY (destination_airport_id) REFERENCES airport(id),
 		UNIQUE(origin_airport_id, destination_airport_id)

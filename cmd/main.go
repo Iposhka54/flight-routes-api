@@ -52,10 +52,13 @@ func main() {
 	log.Info("database initialization completed")
 
 	airportRepository := repository.NewAirportRepository(db)
+	flightRepository := repository.NewFlightRepository(db)
 
 	airportService := service.NewAirportService(airportRepository)
+	flightService := service.NewFlightService(flightRepository)
 
 	airportHandler := handler.NewAirportHandler(airportService)
+	flightHandler := handler.NewFlightHandler(flightService)
 
 	mux := http.NewServeMux()
 	withErrors := func(h middleware.HandlerFunc) http.HandlerFunc {
@@ -65,6 +68,8 @@ func main() {
 	mux.HandleFunc("GET /airports", withErrors(airportHandler.GetAirports))
 	mux.HandleFunc("GET /airport/{iataCode}", withErrors(airportHandler.GetAirportByIataCode))
 	mux.HandleFunc("POST /airports", withErrors(airportHandler.CreateAirport))
+
+	mux.HandleFunc("GET /flights", withErrors(flightHandler.GetFlights))
 
 	server := http.NewServeMux()
 	server.Handle("/api/", http.StripPrefix("/api", mux))
