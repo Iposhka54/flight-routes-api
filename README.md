@@ -157,11 +157,19 @@ Content-Type: application/json
 | Метод | Путь | Описание | Статусы |
 | --- | --- | --- | --- |
 | `GET` | `/api/flights` | Все рейсы со вложенными аэропортами | `200`, `500` |
-| `GET` | `/api/flight/{route}` | Рейс по коду маршрута, 6 символов: `JFKSVO` | `200`, `400`, `404`, `500` |
+| `GET` | `/api/flights?from={iata}&to={iata}` | Прямой рейс между двумя аэропортами | `200`, `400`, `404`, `500` |
 | `POST` | `/api/flights` | Добавить рейс | `201`, `400`, `404`, `409`, `500` |
-| `PATCH` | `/api/flight/{route}` | Обновить цену | `200`, `400`, `404`, `500` |
+| `PATCH` | `/api/flights?from={iata}&to={iata}` | Обновить цену | `200`, `400`, `404`, `500` |
 
 `DELETE` не реализуется.
+
+Без query — список. С `from` и `to` — один рейс (объект, не массив). Если указан только один параметр или код не из 3 символов — `400`. Если прямого рейса нет — `404`.
+
+```http
+GET /api/flights?from=JFK&to=LHR
+GET /api/flights?from=SVO&to=JFK
+GET /api/flights?from=JFK&to=HND
+```
 
 **Создание**
 
@@ -181,7 +189,7 @@ Content-Type: application/json
 **Обновление цены**
 
 ```http
-PATCH /api/flight/JFKSVO
+PATCH /api/flights?from=JFK&to=SVO
 Content-Type: application/json
 
 {
