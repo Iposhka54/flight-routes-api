@@ -5,6 +5,7 @@ import (
 	"errors"
 	apperr "flight-routes-api/internal/error"
 	"flight-routes-api/internal/model"
+	"flight-routes-api/internal/sqlite"
 )
 
 var flightSelect = `
@@ -22,6 +23,10 @@ var (
 	getFlights       = flightSelect
 	getFlightByRoute = flightSelect + `
 		WHERE o.iata_code = $1 AND d.iata_code = $2`
+	createFlight = `
+		INSERT INTO flight(origin_airport_id, destination_airport_id, price)
+		VALUES ($1, $2, $3)
+		RETURNING id;`
 )
 
 type FlightRepository struct {
@@ -71,6 +76,19 @@ func (r *FlightRepository) GetFlight(from, to string) (model.Flight, error) {
 	}
 
 	return flight, nil
+}
+
+func (r *FlightRepository) CreateFlight(originAirportID, destinationAirportID int, price int64) (int, error) {
+	var id int
+	err := r.db.QueryRow(createFlight, originAirportID, destinationAirportID, price).Scan(&id)
+	if err != nil {
+		if sqlite.IsUniqueConstraint(err) {
+			return 0, apperr.ErrFlightAlreadyExists
+		}
+		return 0, wrapDBError(err)
+	}
+
+	return id, nil
 }
 
 func scanFlight(rows *sql.Rows) (model.Flight, error) {

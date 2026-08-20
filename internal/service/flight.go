@@ -7,15 +7,22 @@ import (
 )
 
 type FlightService struct {
-	repository *repository.FlightRepository
+	flights  *repository.FlightRepository
+	airports *repository.AirportRepository
 }
 
-func NewFlightService(flightRepository *repository.FlightRepository) *FlightService {
-	return &FlightService{repository: flightRepository}
+func NewFlightService(
+	flightRepository *repository.FlightRepository,
+	airportRepository *repository.AirportRepository,
+) *FlightService {
+	return &FlightService{
+		flights:  flightRepository,
+		airports: airportRepository,
+	}
 }
 
 func (s *FlightService) GetFlights() ([]model.Flight, error) {
-	flights, err := s.repository.GetFlights()
+	flights, err := s.flights.GetFlights()
 	if err != nil {
 		return nil, err
 	}
@@ -37,10 +44,46 @@ func (s *FlightService) GetFlight(from, to string) (model.Flight, error) {
 		return model.Flight{}, err
 	}
 
-	flight, err := s.repository.GetFlight(from, to)
+	flight, err := s.flights.GetFlight(from, to)
 	if err != nil {
 		return model.Flight{}, err
 	}
 
 	return flight, nil
+}
+
+func (s *FlightService) CreateFlight(origin, destination string, price int64) (model.Flight, error) {
+	if err := validateIATACode(origin); err != nil {
+		return model.Flight{}, err
+	}
+	if err := validateIATACode(destination); err != nil {
+		return model.Flight{}, err
+	}
+	if origin == destination {
+		return model.Flight{}, apperr.ErrSameAirports
+	}
+	if price <= 0 {
+		return model.Flight{}, apperr.ErrInvalidPrice
+	}
+
+	originAirport, err := s.airports.GetAirport(origin)
+	if err != nil {
+		return model.Flight{}, err
+	}
+	destinationAirport, err := s.airports.GetAirport(destination)
+	if err != nil {
+		return model.Flight{}, err
+	}
+
+	id, err := s.flights.CreateFlight(originAirport.ID, destinationAirport.ID, price)
+	if err != nil {
+		return model.Flight{}, err
+	}
+
+	return model.Flight{
+		ID:                 id,
+		OriginAirport:      originAirport,
+		DestinationAirport: destinationAirport,
+		Price:              price,
+	}, nil
 }

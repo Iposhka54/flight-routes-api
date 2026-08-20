@@ -55,7 +55,7 @@ func main() {
 	flightRepository := repository.NewFlightRepository(db)
 
 	airportService := service.NewAirportService(airportRepository)
-	flightService := service.NewFlightService(flightRepository)
+	flightService := service.NewFlightService(flightRepository, airportRepository)
 
 	airportHandler := handler.NewAirportHandler(airportService)
 	flightHandler := handler.NewFlightHandler(flightService)
@@ -70,6 +70,7 @@ func main() {
 	mux.HandleFunc("POST /airports", withErrors(airportHandler.CreateAirport))
 
 	mux.HandleFunc("GET /flights", withErrors(flightHandler.GetFlights))
+	mux.HandleFunc("POST /flights", withErrors(flightHandler.CreateFlight))
 
 	server := http.NewServeMux()
 	server.Handle("/api/", http.StripPrefix("/api", mux))
