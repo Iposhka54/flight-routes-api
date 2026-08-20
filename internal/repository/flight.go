@@ -47,13 +47,9 @@ func (r *FlightRepository) GetFlights() ([]model.Flight, error) {
 	return flights, nil
 }
 
-type flightScanner interface {
-	Scan(dest ...any) error
-}
-
-func scanFlight(scanner flightScanner) (model.Flight, error) {
+func scanFlight(rows *sql.Rows) (model.Flight, error) {
 	var flight model.Flight
-	err := scanner.Scan(
+	err := rows.Scan(
 		&flight.ID,
 		&flight.Price,
 		&flight.OriginAirport.ID, &flight.OriginAirport.IATACode, &flight.OriginAirport.Name, &flight.OriginAirport.Country,
