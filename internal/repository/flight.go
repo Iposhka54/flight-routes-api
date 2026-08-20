@@ -2,10 +2,12 @@ package repository
 
 import (
 	"database/sql"
+	"errors"
+	apperr "flight-routes-api/internal/error"
 	"flight-routes-api/internal/model"
 )
 
-var getFlights = `
+var flightSelect = `
 	SELECT
 		f.id,
 		f.price,
@@ -13,8 +15,14 @@ var getFlights = `
 		d.id, d.iata_code, d.name, d.country
 	FROM flight f
 	JOIN airport o ON o.id = f.origin_airport_id
-	JOIN airport d ON d.id = f.destination_airport_id;
+	JOIN airport d ON d.id = f.destination_airport_id
 `
+
+var (
+	getFlights       = flightSelect
+	getFlightByRoute = flightSelect + `
+		WHERE o.iata_code = $1 AND d.iata_code = $2`
+)
 
 type FlightRepository struct {
 	db *sql.DB
@@ -45,6 +53,24 @@ func (r *FlightRepository) GetFlights() ([]model.Flight, error) {
 	}
 
 	return flights, nil
+}
+
+func (r *FlightRepository) GetFlight(from, to string) (model.Flight, error) {
+	var flight model.Flight
+	err := r.db.QueryRow(getFlightByRoute, from, to).Scan(
+		&flight.ID,
+		&flight.Price,
+		&flight.OriginAirport.ID, &flight.OriginAirport.IATACode, &flight.OriginAirport.Name, &flight.OriginAirport.Country,
+		&flight.DestinationAirport.ID, &flight.DestinationAirport.IATACode, &flight.DestinationAirport.Name, &flight.DestinationAirport.Country,
+	)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return model.Flight{}, apperr.ErrFlightNotFound
+		}
+		return model.Flight{}, wrapDBError(err)
+	}
+
+	return flight, nil
 }
 
 func scanFlight(rows *sql.Rows) (model.Flight, error) {

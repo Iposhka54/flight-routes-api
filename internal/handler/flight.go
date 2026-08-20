@@ -21,13 +21,24 @@ func NewFlightHandler(flightService *service.FlightService) *FlightHandler {
 	return &FlightHandler{flightService: flightService}
 }
 
-func (h *FlightHandler) GetFlights(w http.ResponseWriter, _ *http.Request) error {
-	flights, err := h.flightService.GetFlights()
+func (h *FlightHandler) GetFlights(w http.ResponseWriter, r *http.Request) error {
+	from := r.URL.Query().Get("from")
+	to := r.URL.Query().Get("to")
+	if from == "" && to == "" {
+		flights, err := h.flightService.GetFlights()
+		if err != nil {
+			return err
+		}
+
+		return writeJSON(w, http.StatusOK, newFlightResponses(flights))
+	}
+
+	flight, err := h.flightService.GetFlight(from, to)
 	if err != nil {
 		return err
 	}
 
-	return writeJSON(w, http.StatusOK, newFlightResponses(flights))
+	return writeJSON(w, http.StatusOK, newFlightResponse(flight))
 }
 
 func newFlightResponse(flight model.Flight) flightResponse {

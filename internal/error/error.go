@@ -51,6 +51,10 @@ var (
 	ErrInvalidCountry  = New(http.StatusBadRequest, "invalid country format")
 	ErrInvalidName     = New(http.StatusBadRequest, "invalid name format")
 
+	ErrFlightNotFound = New(http.StatusNotFound, "flight not found")
+	ErrMissingFrom    = New(http.StatusBadRequest, "missing from")
+	ErrMissingTo      = New(http.StatusBadRequest, "missing to")
+
 	ErrDecodeJSON = New(http.StatusBadRequest, "failed to decode request")
 	ErrEncodeJSON = New(http.StatusInternalServerError, "failed to encode response")
 )
