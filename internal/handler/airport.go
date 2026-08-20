@@ -5,7 +5,6 @@ import (
 	apperr "flight-routes-api/internal/error"
 	"flight-routes-api/internal/model"
 	"flight-routes-api/internal/service"
-	"fmt"
 	"net/http"
 )
 
@@ -51,7 +50,7 @@ func (h *AirportHandler) GetAirportByIataCode(w http.ResponseWriter, r *http.Req
 func (h *AirportHandler) CreateAirport(w http.ResponseWriter, r *http.Request) error {
 	var req createAirportRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		return fmt.Errorf("%w: %v", apperr.ErrDecodeJSON, err)
+		return apperr.ErrDecodeJSON.Wrap(err)
 	}
 
 	airport, err := h.airportService.CreateAirport(req.toModel())
