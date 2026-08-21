@@ -1,7 +1,6 @@
 package service
 
 import (
-	apperr "flight-routes-api/internal/error"
 	"flight-routes-api/internal/model"
 	"flight-routes-api/internal/repository"
 )
@@ -22,48 +21,19 @@ func NewFlightService(
 }
 
 func (s *FlightService) GetFlights() ([]model.Flight, error) {
-	flights, err := s.flights.GetFlights()
-	if err != nil {
-		return nil, err
-	}
-
-	return flights, nil
+	return s.flights.GetFlights()
 }
 
 func (s *FlightService) GetFlight(from, to string) (model.Flight, error) {
-	if from == "" {
-		return model.Flight{}, apperr.ErrMissingFrom
-	}
-	if to == "" {
-		return model.Flight{}, apperr.ErrMissingTo
-	}
-	if err := validateIATACode(from); err != nil {
+	if err := validateRoute(from, to); err != nil {
 		return model.Flight{}, err
 	}
-	if err := validateIATACode(to); err != nil {
-		return model.Flight{}, err
-	}
-
-	flight, err := s.flights.GetFlight(from, to)
-	if err != nil {
-		return model.Flight{}, err
-	}
-
-	return flight, nil
+	return s.flights.GetFlight(from, to)
 }
 
 func (s *FlightService) CreateFlight(origin, destination string, price int64) (model.Flight, error) {
-	if err := validateIATACode(origin); err != nil {
+	if err := validateCreateFlight(origin, destination, price); err != nil {
 		return model.Flight{}, err
-	}
-	if err := validateIATACode(destination); err != nil {
-		return model.Flight{}, err
-	}
-	if origin == destination {
-		return model.Flight{}, apperr.ErrSameAirports
-	}
-	if price <= 0 {
-		return model.Flight{}, apperr.ErrInvalidPrice
 	}
 
 	originAirport, err := s.airports.GetAirport(origin)
@@ -89,26 +59,11 @@ func (s *FlightService) CreateFlight(origin, destination string, price int64) (m
 }
 
 func (s *FlightService) UpdateFlightPrice(from, to string, price int64) (model.Flight, error) {
-	if from == "" {
-		return model.Flight{}, apperr.ErrMissingFrom
-	}
-	if to == "" {
-		return model.Flight{}, apperr.ErrMissingTo
-	}
-	if err := validateIATACode(from); err != nil {
+	if err := validateRoute(from, to); err != nil {
 		return model.Flight{}, err
 	}
-	if err := validateIATACode(to); err != nil {
+	if err := validatePrice(price); err != nil {
 		return model.Flight{}, err
 	}
-	if price <= 0 {
-		return model.Flight{}, apperr.ErrInvalidPrice
-	}
-
-	flight, err := s.flights.UpdateFlightPrice(from, to, price)
-	if err != nil {
-		return model.Flight{}, err
-	}
-
-	return flight, nil
+	return s.flights.UpdateFlightPrice(from, to, price)
 }
