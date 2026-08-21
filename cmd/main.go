@@ -71,6 +71,7 @@ func main() {
 
 	mux.HandleFunc("GET /flights", withErrors(flightHandler.GetFlights))
 	mux.HandleFunc("POST /flights", withErrors(flightHandler.CreateFlight))
+	mux.HandleFunc("PATCH /flights", withErrors(flightHandler.UpdateFlight))
 
 	server := http.NewServeMux()
 	server.Handle("/api/", http.StripPrefix("/api", mux))

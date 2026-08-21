@@ -22,6 +22,10 @@ type createFlightRequest struct {
 	Price               float64 `json:"price"`
 }
 
+type updateFlightRequest struct {
+	Price float64 `json:"price"`
+}
+
 type FlightHandler struct {
 	flightService *service.FlightService
 }
@@ -66,6 +70,24 @@ func (h *FlightHandler) CreateFlight(w http.ResponseWriter, r *http.Request) err
 	}
 
 	return writeJSON(w, http.StatusCreated, newFlightResponse(flight))
+}
+
+func (h *FlightHandler) UpdateFlight(w http.ResponseWriter, r *http.Request) error {
+	var req updateFlightRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		return apperr.ErrDecodeJSON.Wrap(err)
+	}
+
+	flight, err := h.flightService.UpdateFlightPrice(
+		r.URL.Query().Get("from"),
+		r.URL.Query().Get("to"),
+		rublesToKopecks(req.Price),
+	)
+	if err != nil {
+		return err
+	}
+
+	return writeJSON(w, http.StatusOK, newFlightResponse(flight))
 }
 
 func newFlightResponse(flight model.Flight) flightResponse {

@@ -197,7 +197,7 @@ Content-Type: application/json
 }
 ```
 
-### Поиск маршрута *(в разработке)*
+### Поиск маршрута
 
 ```http
 GET /api/search?from=JFK&to=SVO

@@ -87,3 +87,28 @@ func (s *FlightService) CreateFlight(origin, destination string, price int64) (m
 		Price:              price,
 	}, nil
 }
+
+func (s *FlightService) UpdateFlightPrice(from, to string, price int64) (model.Flight, error) {
+	if from == "" {
+		return model.Flight{}, apperr.ErrMissingFrom
+	}
+	if to == "" {
+		return model.Flight{}, apperr.ErrMissingTo
+	}
+	if err := validateIATACode(from); err != nil {
+		return model.Flight{}, err
+	}
+	if err := validateIATACode(to); err != nil {
+		return model.Flight{}, err
+	}
+	if price <= 0 {
+		return model.Flight{}, apperr.ErrInvalidPrice
+	}
+
+	flight, err := s.flights.UpdateFlightPrice(from, to, price)
+	if err != nil {
+		return model.Flight{}, err
+	}
+
+	return flight, nil
+}

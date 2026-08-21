@@ -27,6 +27,11 @@ var (
 		INSERT INTO flight(origin_airport_id, destination_airport_id, price)
 		VALUES ($1, $2, $3)
 		RETURNING id;`
+	updateFlightPrice = `
+		UPDATE flight
+		SET price = $3
+		WHERE origin_airport_id = (SELECT id FROM airport WHERE iata_code = $1)
+		  AND destination_airport_id = (SELECT id FROM airport WHERE iata_code = $2)`
 )
 
 type FlightRepository struct {
@@ -89,6 +94,23 @@ func (r *FlightRepository) CreateFlight(originAirportID, destinationAirportID in
 	}
 
 	return id, nil
+}
+
+func (r *FlightRepository) UpdateFlightPrice(from, to string, price int64) (model.Flight, error) {
+	result, err := r.db.Exec(updateFlightPrice, from, to, price)
+	if err != nil {
+		return model.Flight{}, wrapDBError(err)
+	}
+
+	affected, err := result.RowsAffected()
+	if err != nil {
+		return model.Flight{}, wrapDBError(err)
+	}
+	if affected == 0 {
+		return model.Flight{}, apperr.ErrFlightNotFound
+	}
+
+	return r.GetFlight(from, to)
 }
 
 func scanFlight(rows *sql.Rows) (model.Flight, error) {
