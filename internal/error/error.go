@@ -27,7 +27,7 @@ func (e *Error) Wrap(err error) error {
 	if err == nil {
 		return e
 	}
-	return fmt.Errorf("%w: %v", e, err)
+	return fmt.Errorf("%w: %w", e, err)
 }
 
 func (e *Error) sentinel() *Error {

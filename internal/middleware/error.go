@@ -1,6 +1,7 @@
 package middleware
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
 	apperr "flight-routes-api/internal/error"
@@ -24,6 +25,17 @@ func ErrorHandler(log *zap.Logger, next HandlerFunc) http.HandlerFunc {
 			return
 		}
 
+		if errors.Is(err, context.Canceled) {
+			if log != nil {
+				log.Info("request canceled",
+					zap.Error(err),
+					zap.String("method", r.Method),
+					zap.String("path", r.URL.Path),
+				)
+			}
+			return
+		}
+
 		status, message := mapError(err)
 		if log != nil {
 			fields := []zap.Field{
@@ -32,7 +44,7 @@ func ErrorHandler(log *zap.Logger, next HandlerFunc) http.HandlerFunc {
 				zap.String("method", r.Method),
 				zap.String("path", r.URL.Path),
 			}
-			if status >= http.StatusInternalServerError {
+			if status == http.StatusInternalServerError {
 				log.Error("request failed", fields...)
 			} else {
 				log.Info("request failed", fields...)
@@ -46,6 +58,10 @@ func ErrorHandler(log *zap.Logger, next HandlerFunc) http.HandlerFunc {
 }
 
 func mapError(err error) (int, string) {
+	if errors.Is(err, context.DeadlineExceeded) {
+		return http.StatusGatewayTimeout, "request timeout"
+	}
+
 	var appErr *apperr.Error
 	if errors.As(err, &appErr) {
 		return appErr.Status, appErr.Message

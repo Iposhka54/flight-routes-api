@@ -81,8 +81,9 @@ func main() {
 
 	addr := fmt.Sprintf("%s:%d", cfg.ServerConfig.Host, cfg.ServerConfig.Port)
 	srv := &http.Server{
-		Addr:    addr,
-		Handler: root,
+		Addr:              addr,
+		Handler:           middleware.TimeoutHandler(cfg.ServerConfig.Timeout, root),
+		ReadHeaderTimeout: cfg.ServerConfig.Timeout,
 	}
 
 	go func() {

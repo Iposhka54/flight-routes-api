@@ -80,5 +80,8 @@ func (r *AirportRepository) CreateAirport(ctx context.Context, airport model.Air
 }
 
 func wrapDBError(err error) error {
+	if errors.Is(err, context.Canceled) || errors.Is(err, context.DeadlineExceeded) {
+		return err
+	}
 	return apperr.ErrInternal.Wrap(err)
 }

@@ -324,6 +324,7 @@ curl http://localhost:8080/api/airport/SVO
 | --- | --- | --- |
 | `SERVER_HOST` | `localhost` | Хост HTTP-сервера |
 | `SERVER_PORT` | `8080` | Порт |
+| `SERVER_TIMEOUT` | `3s` | Таймаут запроса (`context` + `ReadHeaderTimeout`) |
 | `DB_PATH` | `db/flight-routes.db` | Путь к SQLite |
 | `DB_MODE` | `rwc` | Режим открытия (`rwc` — создать, если нет) |
 | `DB_CACHE_SIZE` | `2000` | Кэш SQLite, КБ |
@@ -333,5 +334,3 @@ curl http://localhost:8080/api/airport/SVO
 | `DB_MAX_OPEN_CONNS` | `1` | Пул соединений (SQLite) |
 | `DB_MAX_IDLE_CONNS` | `1` | Idle-соединения |
 | `DB_CONN_MAX_LIFETIME_SECONDS` | `0` | `0` — без ограничения |
-
-Для SQLite обычно оставляют `MaxOpenConns=1`: одна писательская транзакция в момент времени. Включены WAL и foreign keys.

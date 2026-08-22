@@ -1,6 +1,10 @@
 package config
 
-import "github.com/ilyakaznacheev/cleanenv"
+import (
+	"time"
+
+	"github.com/ilyakaznacheev/cleanenv"
+)
 
 type DatabaseConfig struct {
 	Path string `yaml:"path" env:"PATH" env-default:"db/flight-routes.db"`
@@ -20,8 +24,9 @@ type DatabaseConfig struct {
 }
 
 type ServerConfig struct {
-	Port int    `yaml:"port" env:"PORT" env-default:"8080"`
-	Host string `yaml:"host" env:"HOST" env-default:"localhost"`
+	Port    int           `yaml:"port" env:"PORT" env-default:"8080"`
+	Host    string        `yaml:"host" env:"HOST" env-default:"localhost"`
+	Timeout time.Duration `yaml:"timeout" env:"TIMEOUT" env-default:"3s"`
 }
 
 type Config struct {
