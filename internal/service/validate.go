@@ -9,7 +9,7 @@ func validateIATACode(code string) error {
 	if code == "" {
 		return apperr.ErrMissingIATACode
 	}
-	if len(code) != 3 {
+	if len(code) != 3 || !isAllUpperLatin(code) {
 		return apperr.ErrInvalidIATACode.WithMessage("Неверный iataCode: %s", code)
 	}
 	return nil
@@ -63,4 +63,14 @@ func validateCreateFlight(origin, destination string, price int64) error {
 		return apperr.ErrSameAirports
 	}
 	return validatePrice(price)
+}
+
+func isAllUpperLatin(s string) bool {
+	for i := 0; i < len(s); i++ {
+		c := s[i]
+		if c < 'A' || c > 'Z' {
+			return false
+		}
+	}
+	return true
 }
