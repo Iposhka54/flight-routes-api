@@ -51,7 +51,7 @@ func (h *FlightHandler) GetFlights(w http.ResponseWriter, r *http.Request) error
 		return err
 	}
 
-	return writeJSON(w, http.StatusOK, newFlightResponse(flight))
+	return writeJSON(w, http.StatusOK, newFlightResponses([]model.Flight{flight}))
 }
 
 func (h *FlightHandler) CreateFlight(w http.ResponseWriter, r *http.Request) error {
