@@ -1,6 +1,7 @@
 package apperr
 
 import (
+	"errors"
 	"fmt"
 	"net/http"
 )
@@ -13,6 +14,15 @@ type Error struct {
 
 func (e *Error) Error() string {
 	return e.Message
+}
+
+func (e *Error) Is(target error) bool {
+	var t *Error
+	ok := errors.As(target, &t)
+	if !ok || t == nil {
+		return false
+	}
+	return e.sentinel() == t.sentinel()
 }
 
 func (e *Error) WithMessage(format string, args ...any) *Error {
