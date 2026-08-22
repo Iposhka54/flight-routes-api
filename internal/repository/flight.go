@@ -23,6 +23,10 @@ var (
 	getFlights       = flightSelect
 	getFlightByRoute = flightSelect + `
 		WHERE o.iata_code = $1 AND d.iata_code = $2`
+	getFlightsByOriginIATA = flightSelect + `
+		WHERE o.iata_code = $1`
+	getFlightsByDestinationIATA = flightSelect + `
+		WHERE d.iata_code = $1`
 	createFlight = `
 		INSERT INTO flight(origin_airport_id, destination_airport_id, price)
 		VALUES ($1, $2, $3)
@@ -43,7 +47,19 @@ func NewFlightRepository(db *sql.DB) *FlightRepository {
 }
 
 func (r *FlightRepository) GetFlights() ([]model.Flight, error) {
-	rows, err := r.db.Query(getFlights)
+	return r.queryFlights(getFlights)
+}
+
+func (r *FlightRepository) GetFlightsByOriginIATA(originIATA string) ([]model.Flight, error) {
+	return r.queryFlights(getFlightsByOriginIATA, originIATA)
+}
+
+func (r *FlightRepository) GetFlightsByDestinationIATA(destinationIATA string) ([]model.Flight, error) {
+	return r.queryFlights(getFlightsByDestinationIATA, destinationIATA)
+}
+
+func (r *FlightRepository) queryFlights(query string, args ...any) ([]model.Flight, error) {
+	rows, err := r.db.Query(query, args...)
 	if err != nil {
 		return nil, wrapDBError(err)
 	}

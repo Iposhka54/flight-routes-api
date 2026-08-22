@@ -1,6 +1,10 @@
 package service
 
 import (
+	"cmp"
+	"slices"
+
+	apperr "flight-routes-api/internal/error"
 	"flight-routes-api/internal/model"
 	"flight-routes-api/internal/repository"
 )
@@ -31,16 +35,16 @@ func (s *FlightService) GetFlight(from, to string) (model.Flight, error) {
 	return s.flights.GetFlight(from, to)
 }
 
-func (s *FlightService) CreateFlight(origin, destination string, price int64) (model.Flight, error) {
-	if err := validateCreateFlight(origin, destination, price); err != nil {
+func (s *FlightService) CreateFlight(from, to string, price int64) (model.Flight, error) {
+	if err := validateCreateFlight(from, to, price); err != nil {
 		return model.Flight{}, err
 	}
 
-	originAirport, err := s.airports.GetAirport(origin)
+	originAirport, err := s.airports.GetAirport(from)
 	if err != nil {
 		return model.Flight{}, err
 	}
-	destinationAirport, err := s.airports.GetAirport(destination)
+	destinationAirport, err := s.airports.GetAirport(to)
 	if err != nil {
 		return model.Flight{}, err
 	}
@@ -66,4 +70,54 @@ func (s *FlightService) UpdateFlightPrice(from, to string, price int64) (model.F
 		return model.Flight{}, err
 	}
 	return s.flights.UpdateFlightPrice(from, to, price)
+}
+
+func (s *FlightService) Search(from, to string) ([]Route, error) {
+	if err := validateRoute(from, to); err != nil {
+		return nil, err
+	}
+
+	outgoing, err := s.flights.GetFlightsByOriginIATA(from)
+	if err != nil {
+		return nil, err
+	}
+	incoming, err := s.flights.GetFlightsByDestinationIATA(to)
+	if err != nil {
+		return nil, err
+	}
+
+	incomingByOrigin := make(map[int]model.Flight, len(incoming))
+	for _, flight := range incoming {
+		incomingByOrigin[flight.OriginAirport.ID] = flight
+	}
+
+	routes := make([]Route, 0)
+
+	for _, first := range outgoing {
+		if first.DestinationAirport.IATACode == to {
+			routes = append(routes, Route{
+				TotalPrice: first.Price,
+				Flights:    []model.Flight{first},
+			})
+			continue
+		}
+		second, ok := incomingByOrigin[first.DestinationAirport.ID]
+		if !ok {
+			continue
+		}
+		routes = append(routes, Route{
+			TotalPrice: first.Price + second.Price,
+			Flights:    []model.Flight{first, second},
+		})
+	}
+
+	if len(routes) == 0 {
+		return nil, apperr.ErrRouteNotFound
+	}
+
+	slices.SortFunc(routes, func(a, b Route) int {
+		return cmp.Compare(a.TotalPrice, b.TotalPrice)
+	})
+
+	return routes, nil
 }

@@ -203,7 +203,7 @@ Content-Type: application/json
 GET /api/search?from=JFK&to=SVO
 ```
 
-Ищем самый дешёвый вариант: прямой рейс **или** маршрут с одной пересадкой. Если вариантов несколько — берём минимальный `totalPrice`. Если ничего нет — `404`.
+Ищем все маршруты: прямой рейс и варианты с одной пересадкой. Сортировка по `totalPrice` по возрастанию. Если ничего нет — `404`.
 
 Аэропорты — узлы направленного графа, рейсы — рёбра с весом `price`.
 
@@ -211,39 +211,64 @@ GET /api/search?from=JFK&to=SVO
 {
   "origin": "JFK",
   "destination": "SVO",
-  "totalPrice": 650.00,
-  "route": [
+  "routes": [
     {
-      "flightId": 12,
-      "originAirport": {
-        "id": 1,
-        "iataCode": "JFK",
-        "name": "John F. Kennedy International",
-        "country": "USA"
-      },
-      "destinationAirport": {
-        "id": 3,
-        "iataCode": "LHR",
-        "name": "Heathrow",
-        "country": "United Kingdom"
-      },
-      "price": 400.00
+      "totalPrice": 400.00,
+      "route": [
+        {
+          "flightId": 12,
+          "originAirport": {
+            "id": 1,
+            "iataCode": "JFK",
+            "name": "John F. Kennedy International",
+            "country": "USA"
+          },
+          "destinationAirport": {
+            "id": 2,
+            "iataCode": "SVO",
+            "name": "Sheremetyevo",
+            "country": "Russia"
+          },
+          "price": 400.00
+        }
+      ]
     },
     {
-      "flightId": 15,
-      "originAirport": {
-        "id": 3,
-        "iataCode": "LHR",
-        "name": "Heathrow",
-        "country": "United Kingdom"
-      },
-      "destinationAirport": {
-        "id": 2,
-        "iataCode": "SVO",
-        "name": "Sheremetyevo",
-        "country": "Russia"
-      },
-      "price": 250.00
+      "totalPrice": 650.00,
+      "route": [
+        {
+          "flightId": 12,
+          "originAirport": {
+            "id": 1,
+            "iataCode": "JFK",
+            "name": "John F. Kennedy International",
+            "country": "USA"
+          },
+          "destinationAirport": {
+            "id": 3,
+            "iataCode": "LHR",
+            "name": "Heathrow",
+            "country": "United Kingdom"
+          },
+          "price": 400.00
+        },
+        {
+          "flightId": 15,
+          "originAirport": {
+            "id": 3,
+            "iataCode": "LHR",
+            "name": "Heathrow",
+            "country": "United Kingdom"
+          },
+          "destinationAirport": {
+            "id": 2,
+            "iataCode": "SVO",
+            "name": "Sheremetyevo",
+            "country": "Russia"
+          },
+          "price": 250.00
+        }
+      ]
     }
   ]
 }

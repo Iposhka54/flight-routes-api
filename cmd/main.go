@@ -73,6 +73,8 @@ func main() {
 	mux.HandleFunc("POST /flights", withErrors(flightHandler.CreateFlight))
 	mux.HandleFunc("PATCH /flights", withErrors(flightHandler.UpdateFlight))
 
+	mux.HandleFunc("GET /search", withErrors(flightHandler.Search))
+
 	server := http.NewServeMux()
 	server.Handle("/api/", http.StripPrefix("/api", mux))
 

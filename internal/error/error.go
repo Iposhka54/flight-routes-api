@@ -53,6 +53,7 @@ var (
 
 	ErrFlightNotFound      = New(http.StatusNotFound, "flight not found")
 	ErrFlightAlreadyExists = New(http.StatusConflict, "flight already exists")
+	ErrRouteNotFound       = New(http.StatusNotFound, "route not found")
 	ErrMissingFrom         = New(http.StatusBadRequest, "missing from")
 	ErrMissingTo           = New(http.StatusBadRequest, "missing to")
 	ErrInvalidPrice        = New(http.StatusBadRequest, "invalid price")
