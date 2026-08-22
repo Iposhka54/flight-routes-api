@@ -2,6 +2,7 @@ package service
 
 import (
 	"cmp"
+	"context"
 	"slices"
 
 	apperr "flight-routes-api/internal/error"
@@ -24,32 +25,32 @@ func NewFlightService(
 	}
 }
 
-func (s *FlightService) GetFlights() ([]model.Flight, error) {
-	return s.flights.GetFlights()
+func (s *FlightService) GetFlights(ctx context.Context) ([]model.Flight, error) {
+	return s.flights.GetFlights(ctx)
 }
 
-func (s *FlightService) GetFlight(from, to string) (model.Flight, error) {
+func (s *FlightService) GetFlight(ctx context.Context, from, to string) (model.Flight, error) {
 	if err := validateRoute(from, to); err != nil {
 		return model.Flight{}, err
 	}
-	return s.flights.GetFlight(from, to)
+	return s.flights.GetFlight(ctx, from, to)
 }
 
-func (s *FlightService) CreateFlight(from, to string, price int64) (model.Flight, error) {
+func (s *FlightService) CreateFlight(ctx context.Context, from, to string, price int64) (model.Flight, error) {
 	if err := validateCreateFlight(from, to, price); err != nil {
 		return model.Flight{}, err
 	}
 
-	originAirport, err := s.airports.GetAirport(from)
+	originAirport, err := s.airports.GetAirport(ctx, from)
 	if err != nil {
 		return model.Flight{}, err
 	}
-	destinationAirport, err := s.airports.GetAirport(to)
+	destinationAirport, err := s.airports.GetAirport(ctx, to)
 	if err != nil {
 		return model.Flight{}, err
 	}
 
-	id, err := s.flights.CreateFlight(originAirport.ID, destinationAirport.ID, price)
+	id, err := s.flights.CreateFlight(ctx, originAirport.ID, destinationAirport.ID, price)
 	if err != nil {
 		return model.Flight{}, err
 	}
@@ -62,26 +63,26 @@ func (s *FlightService) CreateFlight(from, to string, price int64) (model.Flight
 	}, nil
 }
 
-func (s *FlightService) UpdateFlightPrice(from, to string, price int64) (model.Flight, error) {
+func (s *FlightService) UpdateFlightPrice(ctx context.Context, from, to string, price int64) (model.Flight, error) {
 	if err := validateRoute(from, to); err != nil {
 		return model.Flight{}, err
 	}
 	if err := validatePrice(price); err != nil {
 		return model.Flight{}, err
 	}
-	return s.flights.UpdateFlightPrice(from, to, price)
+	return s.flights.UpdateFlightPrice(ctx, from, to, price)
 }
 
-func (s *FlightService) Search(from, to string) ([]Route, error) {
+func (s *FlightService) Search(ctx context.Context, from, to string) ([]Route, error) {
 	if err := validateRoute(from, to); err != nil {
 		return nil, err
 	}
 
-	outgoing, err := s.flights.GetFlightsByOriginIATA(from)
+	outgoing, err := s.flights.GetFlightsByOriginIATA(ctx, from)
 	if err != nil {
 		return nil, err
 	}
-	incoming, err := s.flights.GetFlightsByDestinationIATA(to)
+	incoming, err := s.flights.GetFlightsByDestinationIATA(ctx, to)
 	if err != nil {
 		return nil, err
 	}

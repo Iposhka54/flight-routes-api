@@ -1,6 +1,7 @@
 package repository
 
 import (
+	"context"
 	"database/sql"
 	"errors"
 	apperr "flight-routes-api/internal/error"
@@ -24,8 +25,8 @@ func NewAirportRepository(db *sql.DB) *AirportRepository {
 	return &AirportRepository{db: db}
 }
 
-func (r *AirportRepository) GetAirports() ([]model.Airport, error) {
-	rows, err := r.db.Query(getAirports)
+func (r *AirportRepository) GetAirports(ctx context.Context) ([]model.Airport, error) {
+	rows, err := r.db.QueryContext(ctx, getAirports)
 	if err != nil {
 		return nil, wrapDBError(err)
 	}
@@ -50,9 +51,9 @@ func (r *AirportRepository) GetAirports() ([]model.Airport, error) {
 	return airports, nil
 }
 
-func (r *AirportRepository) GetAirport(iataCode string) (model.Airport, error) {
+func (r *AirportRepository) GetAirport(ctx context.Context, iataCode string) (model.Airport, error) {
 	var airport model.Airport
-	err := r.db.QueryRow(getAirportByIata, iataCode).Scan(&airport.ID, &airport.IATACode, &airport.Name, &airport.Country)
+	err := r.db.QueryRowContext(ctx, getAirportByIata, iataCode).Scan(&airport.ID, &airport.IATACode, &airport.Name, &airport.Country)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return model.Airport{}, apperr.ErrAirportNotFound
@@ -63,9 +64,9 @@ func (r *AirportRepository) GetAirport(iataCode string) (model.Airport, error) {
 	return airport, nil
 }
 
-func (r *AirportRepository) CreateAirport(airport model.Airport) (int, error) {
+func (r *AirportRepository) CreateAirport(ctx context.Context, airport model.Airport) (int, error) {
 	var id int
-	err := r.db.QueryRow(createAirport,
+	err := r.db.QueryRowContext(ctx, createAirport,
 		airport.IATACode, airport.Name, airport.Country,
 	).Scan(&id)
 	if err != nil {

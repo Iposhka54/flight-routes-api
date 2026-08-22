@@ -1,6 +1,7 @@
 package service
 
 import (
+	"context"
 	"flight-routes-api/internal/model"
 	"flight-routes-api/internal/repository"
 )
@@ -13,23 +14,23 @@ func NewAirportService(airportRepository *repository.AirportRepository) *Airport
 	return &AirportService{repository: airportRepository}
 }
 
-func (s *AirportService) GetAirports() ([]model.Airport, error) {
-	return s.repository.GetAirports()
+func (s *AirportService) GetAirports(ctx context.Context) ([]model.Airport, error) {
+	return s.repository.GetAirports(ctx)
 }
 
-func (s *AirportService) GetAirport(iataCode string) (model.Airport, error) {
+func (s *AirportService) GetAirport(ctx context.Context, iataCode string) (model.Airport, error) {
 	if err := validateIATACode(iataCode); err != nil {
 		return model.Airport{}, err
 	}
-	return s.repository.GetAirport(iataCode)
+	return s.repository.GetAirport(ctx, iataCode)
 }
 
-func (s *AirportService) CreateAirport(airport model.Airport) (model.Airport, error) {
+func (s *AirportService) CreateAirport(ctx context.Context, airport model.Airport) (model.Airport, error) {
 	if err := validateAirport(airport); err != nil {
 		return airport, err
 	}
 
-	id, err := s.repository.CreateAirport(airport)
+	id, err := s.repository.CreateAirport(ctx, airport)
 	if err != nil {
 		return airport, err
 	}

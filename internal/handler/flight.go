@@ -38,7 +38,7 @@ func (h *FlightHandler) GetFlights(w http.ResponseWriter, r *http.Request) error
 	from := r.URL.Query().Get("from")
 	to := r.URL.Query().Get("to")
 	if from == "" && to == "" {
-		flights, err := h.flightService.GetFlights()
+		flights, err := h.flightService.GetFlights(r.Context())
 		if err != nil {
 			return err
 		}
@@ -46,7 +46,7 @@ func (h *FlightHandler) GetFlights(w http.ResponseWriter, r *http.Request) error
 		return writeJSON(w, http.StatusOK, newFlightResponses(flights))
 	}
 
-	flight, err := h.flightService.GetFlight(from, to)
+	flight, err := h.flightService.GetFlight(r.Context(), from, to)
 	if err != nil {
 		return err
 	}
@@ -61,6 +61,7 @@ func (h *FlightHandler) CreateFlight(w http.ResponseWriter, r *http.Request) err
 	}
 
 	flight, err := h.flightService.CreateFlight(
+		r.Context(),
 		req.OriginIataCode,
 		req.DestinationIataCode,
 		rublesToKopecks(req.Price),
@@ -79,6 +80,7 @@ func (h *FlightHandler) UpdateFlight(w http.ResponseWriter, r *http.Request) err
 	}
 
 	flight, err := h.flightService.UpdateFlightPrice(
+		r.Context(),
 		r.URL.Query().Get("from"),
 		r.URL.Query().Get("to"),
 		rublesToKopecks(req.Price),

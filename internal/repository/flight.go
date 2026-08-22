@@ -1,6 +1,7 @@
 package repository
 
 import (
+	"context"
 	"database/sql"
 	"errors"
 	apperr "flight-routes-api/internal/error"
@@ -46,20 +47,20 @@ func NewFlightRepository(db *sql.DB) *FlightRepository {
 	return &FlightRepository{db: db}
 }
 
-func (r *FlightRepository) GetFlights() ([]model.Flight, error) {
-	return r.queryFlights(getFlights)
+func (r *FlightRepository) GetFlights(ctx context.Context) ([]model.Flight, error) {
+	return r.queryFlights(ctx, getFlights)
 }
 
-func (r *FlightRepository) GetFlightsByOriginIATA(originIATA string) ([]model.Flight, error) {
-	return r.queryFlights(getFlightsByOriginIATA, originIATA)
+func (r *FlightRepository) GetFlightsByOriginIATA(ctx context.Context, originIATA string) ([]model.Flight, error) {
+	return r.queryFlights(ctx, getFlightsByOriginIATA, originIATA)
 }
 
-func (r *FlightRepository) GetFlightsByDestinationIATA(destinationIATA string) ([]model.Flight, error) {
-	return r.queryFlights(getFlightsByDestinationIATA, destinationIATA)
+func (r *FlightRepository) GetFlightsByDestinationIATA(ctx context.Context, destinationIATA string) ([]model.Flight, error) {
+	return r.queryFlights(ctx, getFlightsByDestinationIATA, destinationIATA)
 }
 
-func (r *FlightRepository) queryFlights(query string, args ...any) ([]model.Flight, error) {
-	rows, err := r.db.Query(query, args...)
+func (r *FlightRepository) queryFlights(ctx context.Context, query string, args ...any) ([]model.Flight, error) {
+	rows, err := r.db.QueryContext(ctx, query, args...)
 	if err != nil {
 		return nil, wrapDBError(err)
 	}
@@ -81,9 +82,9 @@ func (r *FlightRepository) queryFlights(query string, args ...any) ([]model.Flig
 	return flights, nil
 }
 
-func (r *FlightRepository) GetFlight(from, to string) (model.Flight, error) {
+func (r *FlightRepository) GetFlight(ctx context.Context, from, to string) (model.Flight, error) {
 	var flight model.Flight
-	err := r.db.QueryRow(getFlightByRoute, from, to).Scan(
+	err := r.db.QueryRowContext(ctx, getFlightByRoute, from, to).Scan(
 		&flight.ID,
 		&flight.Price,
 		&flight.OriginAirport.ID, &flight.OriginAirport.IATACode, &flight.OriginAirport.Name, &flight.OriginAirport.Country,
@@ -99,9 +100,9 @@ func (r *FlightRepository) GetFlight(from, to string) (model.Flight, error) {
 	return flight, nil
 }
 
-func (r *FlightRepository) CreateFlight(originAirportID, destinationAirportID int, price int64) (int, error) {
+func (r *FlightRepository) CreateFlight(ctx context.Context, originAirportID, destinationAirportID int, price int64) (int, error) {
 	var id int
-	err := r.db.QueryRow(createFlight, originAirportID, destinationAirportID, price).Scan(&id)
+	err := r.db.QueryRowContext(ctx, createFlight, originAirportID, destinationAirportID, price).Scan(&id)
 	if err != nil {
 		if sqlite.IsUniqueConstraint(err) {
 			return 0, apperr.ErrFlightAlreadyExists
@@ -112,8 +113,8 @@ func (r *FlightRepository) CreateFlight(originAirportID, destinationAirportID in
 	return id, nil
 }
 
-func (r *FlightRepository) UpdateFlightPrice(from, to string, price int64) (model.Flight, error) {
-	result, err := r.db.Exec(updateFlightPrice, from, to, price)
+func (r *FlightRepository) UpdateFlightPrice(ctx context.Context, from, to string, price int64) (model.Flight, error) {
+	result, err := r.db.ExecContext(ctx, updateFlightPrice, from, to, price)
 	if err != nil {
 		return model.Flight{}, wrapDBError(err)
 	}
@@ -126,7 +127,7 @@ func (r *FlightRepository) UpdateFlightPrice(from, to string, price int64) (mode
 		return model.Flight{}, apperr.ErrFlightNotFound
 	}
 
-	return r.GetFlight(from, to)
+	return r.GetFlight(ctx, from, to)
 }
 
 func scanFlight(rows *sql.Rows) (model.Flight, error) {

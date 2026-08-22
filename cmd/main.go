@@ -47,7 +47,7 @@ func main() {
 
 	log.Info("sqlite client creation completed")
 
-	if err = sqlite.InitDB(db); err != nil {
+	if err = sqlite.InitDB(ctx, db); err != nil {
 		log.Fatal("failed to init db", zap.Error(err))
 	}
 	log.Info("database initialization completed")

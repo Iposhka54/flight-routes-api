@@ -27,7 +27,7 @@ func (h *FlightHandler) Search(w http.ResponseWriter, r *http.Request) error {
 	from := r.URL.Query().Get("from")
 	to := r.URL.Query().Get("to")
 
-	routes, err := h.flightService.Search(from, to)
+	routes, err := h.flightService.Search(r.Context(), from, to)
 	if err != nil {
 		return err
 	}

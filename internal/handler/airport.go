@@ -29,8 +29,8 @@ func NewAirportHandler(airportService *service.AirportService) *AirportHandler {
 	return &AirportHandler{airportService: airportService}
 }
 
-func (h *AirportHandler) GetAirports(w http.ResponseWriter, _ *http.Request) error {
-	airports, err := h.airportService.GetAirports()
+func (h *AirportHandler) GetAirports(w http.ResponseWriter, r *http.Request) error {
+	airports, err := h.airportService.GetAirports(r.Context())
 	if err != nil {
 		return err
 	}
@@ -39,7 +39,7 @@ func (h *AirportHandler) GetAirports(w http.ResponseWriter, _ *http.Request) err
 }
 
 func (h *AirportHandler) GetAirportByIataCode(w http.ResponseWriter, r *http.Request) error {
-	airport, err := h.airportService.GetAirport(r.PathValue("iataCode"))
+	airport, err := h.airportService.GetAirport(r.Context(), r.PathValue("iataCode"))
 	if err != nil {
 		return err
 	}
@@ -53,7 +53,7 @@ func (h *AirportHandler) CreateAirport(w http.ResponseWriter, r *http.Request) e
 		return apperr.ErrDecodeJSON.Wrap(err)
 	}
 
-	airport, err := h.airportService.CreateAirport(req.toModel())
+	airport, err := h.airportService.CreateAirport(r.Context(), req.toModel())
 	if err != nil {
 		return err
 	}
