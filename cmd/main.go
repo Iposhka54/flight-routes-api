@@ -12,6 +12,8 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
+	"syscall"
+	"time"
 
 	"github.com/joho/godotenv"
 	"go.uber.org/zap"
@@ -19,7 +21,7 @@ import (
 
 func main() {
 	ctx := context.Background()
-	ctx, stop := signal.NotifyContext(ctx, os.Interrupt)
+	ctx, stop := signal.NotifyContext(ctx, os.Interrupt, syscall.SIGTERM)
 	defer stop()
 
 	log, err := zap.NewProduction()
@@ -48,7 +50,6 @@ func main() {
 	if err = sqlite.InitDB(db); err != nil {
 		log.Fatal("failed to init db", zap.Error(err))
 	}
-
 	log.Info("database initialization completed")
 
 	airportRepository := repository.NewAirportRepository(db)
@@ -75,17 +76,33 @@ func main() {
 
 	mux.HandleFunc("GET /search", withErrors(flightHandler.Search))
 
-	server := http.NewServeMux()
-	server.Handle("/api/", http.StripPrefix("/api", mux))
+	root := http.NewServeMux()
+	root.Handle("/api/", http.StripPrefix("/api", mux))
 
 	addr := fmt.Sprintf("%s:%d", cfg.ServerConfig.Host, cfg.ServerConfig.Port)
-	log.Info("http server listening",
-		zap.String("addr", addr))
-	if err = http.ListenAndServe(addr, server); err != nil {
-		log.Fatal("failed to start http server", zap.Error(err))
+	srv := &http.Server{
+		Addr:    addr,
+		Handler: root,
 	}
 
+	go func() {
+		log.Info("http server listening", zap.String("addr", addr))
+		if serveErr := srv.ListenAndServe(); serveErr != nil && serveErr != http.ErrServerClosed {
+			log.Fatal("failed to start http server", zap.Error(serveErr))
+		}
+	}()
+
 	<-ctx.Done()
+	stop()
+
+	log.Info("http server shutting down")
+
+	shutdownCtx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+
+	if err = srv.Shutdown(shutdownCtx); err != nil {
+		log.Fatal("failed to shutdown http server", zap.Error(err))
+	}
 
 	log.Info("http server stopped")
 }
