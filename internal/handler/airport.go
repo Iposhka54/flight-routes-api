@@ -58,7 +58,7 @@ func (h *AirportHandler) CreateAirport(w http.ResponseWriter, r *http.Request) e
 		return err
 	}
 
-	return writeJSON(w, http.StatusOK, newAirportResponse(airport))
+	return writeJSON(w, http.StatusCreated, newAirportResponse(airport))
 }
 
 func newAirportResponse(airport model.Airport) airportResponse {
