@@ -3,6 +3,7 @@ package handler
 import (
 	"flight-routes-api/internal/service"
 	"net/http"
+	"strings"
 )
 
 type searchResponse struct {
@@ -42,8 +43,8 @@ func newSearchResponse(from, to string, routes []service.Route) searchResponse {
 	}
 
 	return searchResponse{
-		Origin:      from,
-		Destination: to,
+		Origin:      strings.ToUpper(strings.TrimSpace(from)),
+		Destination: strings.ToUpper(strings.TrimSpace(to)),
 		Routes:      items,
 	}
 }

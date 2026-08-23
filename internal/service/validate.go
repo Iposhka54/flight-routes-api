@@ -1,38 +1,46 @@
 package service
 
 import (
+	"strings"
+
 	apperr "flight-routes-api/internal/error"
 	"flight-routes-api/internal/model"
 )
 
-func validateIATACode(code string) error {
+func normalizeIATACode(code string) string {
+	return strings.ToUpper(strings.TrimSpace(code))
+}
+
+func validateIATACode(code string) (string, error) {
+	code = normalizeIATACode(code)
 	if code == "" {
-		return apperr.ErrMissingIATACode
+		return "", apperr.ErrMissingIATACode
 	}
 	if len(code) != 3 || !isAllUpperLatin(code) {
-		return apperr.ErrInvalidIATACode.WithMessage("Неверный iataCode: %s", code)
+		return "", apperr.ErrInvalidIATACode.WithMessage("Неверный iataCode: %s", code)
 	}
-	return nil
+	return code, nil
 }
 
-func validateIATACodes(codes ...string) error {
-	for _, code := range codes {
-		if err := validateIATACode(code); err != nil {
-			return err
-		}
-	}
-	return nil
-}
-
-func validateRoute(from, to string) error {
+func validateRoute(from, to string) (string, string, error) {
+	from = normalizeIATACode(from)
+	to = normalizeIATACode(to)
 	switch {
 	case from == "":
-		return apperr.ErrMissingFrom
+		return "", "", apperr.ErrMissingFrom
 	case to == "":
-		return apperr.ErrMissingTo
-	default:
-		return validateIATACodes(from, to)
+		return "", "", apperr.ErrMissingTo
 	}
+
+	from, err := validateIATACode(from)
+	if err != nil {
+		return "", "", err
+	}
+	to, err = validateIATACode(to)
+	if err != nil {
+		return "", "", err
+	}
+	return from, to, nil
 }
 
 func validatePrice(price int64) error {
@@ -42,27 +50,38 @@ func validatePrice(price int64) error {
 	return nil
 }
 
-func validateAirport(airport model.Airport) error {
-	if err := validateIATACode(airport.IATACode); err != nil {
-		return err
+func validateAirport(airport model.Airport) (model.Airport, error) {
+	code, err := validateIATACode(airport.IATACode)
+	if err != nil {
+		return airport, err
 	}
+	airport.IATACode = code
+
 	if n := len(airport.Country); n < 3 || n > 64 {
-		return apperr.ErrInvalidCountry
+		return airport, apperr.ErrInvalidCountry
 	}
 	if n := len(airport.Name); n < 3 || n > 64 {
-		return apperr.ErrInvalidName
+		return airport, apperr.ErrInvalidName
 	}
-	return nil
+	return airport, nil
 }
 
-func validateCreateFlight(origin, destination string, price int64) error {
-	if err := validateIATACodes(origin, destination); err != nil {
-		return err
+func validateCreateFlight(origin, destination string, price int64) (string, string, error) {
+	origin, err := validateIATACode(origin)
+	if err != nil {
+		return "", "", err
+	}
+	destination, err = validateIATACode(destination)
+	if err != nil {
+		return "", "", err
 	}
 	if origin == destination {
-		return apperr.ErrSameAirports
+		return "", "", apperr.ErrSameAirports
 	}
-	return validatePrice(price)
+	if err := validatePrice(price); err != nil {
+		return "", "", err
+	}
+	return origin, destination, nil
 }
 
 func isAllUpperLatin(s string) bool {

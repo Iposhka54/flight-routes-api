@@ -30,14 +30,16 @@ func (s *FlightService) GetFlights(ctx context.Context) ([]model.Flight, error) 
 }
 
 func (s *FlightService) GetFlight(ctx context.Context, from, to string) (model.Flight, error) {
-	if err := validateRoute(from, to); err != nil {
+	from, to, err := validateRoute(from, to)
+	if err != nil {
 		return model.Flight{}, err
 	}
 	return s.flights.GetFlight(ctx, from, to)
 }
 
 func (s *FlightService) CreateFlight(ctx context.Context, from, to string, price int64) (model.Flight, error) {
-	if err := validateCreateFlight(from, to, price); err != nil {
+	from, to, err := validateCreateFlight(from, to, price)
+	if err != nil {
 		return model.Flight{}, err
 	}
 
@@ -64,7 +66,8 @@ func (s *FlightService) CreateFlight(ctx context.Context, from, to string, price
 }
 
 func (s *FlightService) UpdateFlightPrice(ctx context.Context, from, to string, price int64) (model.Flight, error) {
-	if err := validateRoute(from, to); err != nil {
+	from, to, err := validateRoute(from, to)
+	if err != nil {
 		return model.Flight{}, err
 	}
 	if err := validatePrice(price); err != nil {
@@ -74,7 +77,8 @@ func (s *FlightService) UpdateFlightPrice(ctx context.Context, from, to string, 
 }
 
 func (s *FlightService) Search(ctx context.Context, from, to string) ([]Route, error) {
-	if err := validateRoute(from, to); err != nil {
+	from, to, err := validateRoute(from, to)
+	if err != nil {
 		return nil, err
 	}
 

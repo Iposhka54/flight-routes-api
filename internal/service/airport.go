@@ -19,14 +19,16 @@ func (s *AirportService) GetAirports(ctx context.Context) ([]model.Airport, erro
 }
 
 func (s *AirportService) GetAirport(ctx context.Context, iataCode string) (model.Airport, error) {
-	if err := validateIATACode(iataCode); err != nil {
+	iataCode, err := validateIATACode(iataCode)
+	if err != nil {
 		return model.Airport{}, err
 	}
 	return s.repository.GetAirport(ctx, iataCode)
 }
 
 func (s *AirportService) CreateAirport(ctx context.Context, airport model.Airport) (model.Airport, error) {
-	if err := validateAirport(airport); err != nil {
+	airport, err := validateAirport(airport)
+	if err != nil {
 		return airport, err
 	}
 
